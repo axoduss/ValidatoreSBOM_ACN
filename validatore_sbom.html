@@ -1,0 +1,1732 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Validatore SBOM - Linee Guida ACN Criteri di Premialità</title>
+    <style>
+        :root {
+            --green: #22c55e;
+            --red: #ef4444;
+            --orange: #f59e0b;
+            --blue: #3b82f6;
+            --dark: #1e293b;
+            --light: #f8fafc;
+            --gray: #64748b;
+            --border: #e2e8f0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--light);
+            color: var(--dark);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        }
+
+        header h1 {
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+        }
+
+        header p {
+            opacity: 0.8;
+            font-size: 0.95rem;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-top: 10px;
+        }
+
+        .badge-version {
+            background: rgba(59, 130, 246, 0.2);
+            color: #93c5fd;
+        }
+
+        .input-section {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border: 1px solid var(--border);
+        }
+
+        .input-section h2 {
+            font-size: 1.2rem;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .input-methods {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .input-methods button {
+            padding: 10px 20px;
+            border: 2px solid var(--border);
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .input-methods button.active {
+            border-color: var(--blue);
+            background: rgba(59, 130, 246, 0.05);
+            color: var(--blue);
+        }
+
+        .input-methods button:hover {
+            border-color: var(--blue);
+        }
+
+        textarea {
+            width: 100%;
+            height: 300px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            font-family: 'Fira Code', 'Consolas', monospace;
+            font-size: 0.85rem;
+            resize: vertical;
+            transition: border-color 0.2s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--blue);
+        }
+
+        .file-drop {
+            border: 2px dashed var(--border);
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: none;
+        }
+
+        .file-drop.active {
+            display: block;
+        }
+
+        .file-drop:hover, .file-drop.dragover {
+            border-color: var(--blue);
+            background: rgba(59, 130, 246, 0.03);
+        }
+
+        .file-drop .icon {
+            font-size: 2.5rem;
+            margin-bottom: 12px;
+        }
+
+        .btn-validate {
+            background: linear-gradient(135deg, var(--blue) 0%, #2563eb 100%);
+            color: white;
+            border: none;
+            padding: 14px 32px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 16px;
+            transition: transform 0.1s, box-shadow 0.2s;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-validate:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-validate:active {
+            transform: translateY(0);
+        }
+
+        .btn-export {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-left: 12px;
+            transition: transform 0.1s;
+        }
+
+        .btn-export:hover {
+            transform: translateY(-1px);
+        }
+
+        /* RISULTATI */
+        .results {
+            display: none;
+        }
+
+        .results.visible {
+            display: block;
+        }
+
+        .score-card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .score-circle {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 2.5rem;
+            font-weight: 700;
+            border: 6px solid;
+        }
+
+        .score-circle.pass {
+            border-color: var(--green);
+            color: var(--green);
+            background: rgba(34, 197, 94, 0.05);
+        }
+
+        .score-circle.fail {
+            border-color: var(--red);
+            color: var(--red);
+            background: rgba(239, 68, 68, 0.05);
+        }
+
+        .score-circle.partial {
+            border-color: var(--orange);
+            color: var(--orange);
+            background: rgba(245, 158, 11, 0.05);
+        }
+
+        .score-circle small {
+            font-size: 0.8rem;
+            font-weight: 400;
+            color: var(--gray);
+        }
+
+        .score-label {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .score-sublabel {
+            font-size: 0.85rem;
+            color: var(--gray);
+            margin-top: 4px;
+        }
+
+        /* Sezioni di dettaglio */
+        .detail-section {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border: 1px solid var(--border);
+        }
+
+        .detail-section h3 {
+            font-size: 1.1rem;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .check-item {
+            display: flex;
+            align-items: flex-start;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            gap: 12px;
+            transition: background 0.2s;
+        }
+
+        .check-item:hover {
+            background: var(--light);
+        }
+
+        .check-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 700;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .check-icon.pass {
+            background: rgba(34, 197, 94, 0.15);
+            color: var(--green);
+        }
+
+        .check-icon.fail {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--red);
+        }
+
+        .check-icon.warn {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--orange);
+        }
+
+        .check-content {
+            flex: 1;
+        }
+
+        .check-title {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .check-detail {
+            font-size: 0.8rem;
+            color: var(--gray);
+            margin-top: 2px;
+        }
+
+        .check-path {
+            font-family: 'Fira Code', monospace;
+            font-size: 0.75rem;
+            background: var(--light);
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: var(--blue);
+        }
+
+        /* Tabella componenti */
+        .component-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+            font-size: 0.85rem;
+        }
+
+        .component-table th {
+            background: var(--light);
+            padding: 10px 12px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .component-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .component-table tr:hover td {
+            background: rgba(59, 130, 246, 0.02);
+        }
+
+        .country-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .country-badge.allowed {
+            background: rgba(34, 197, 94, 0.1);
+            color: #16a34a;
+        }
+
+        .country-badge.denied {
+            background: rgba(239, 68, 68, 0.1);
+            color: #dc2626;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .status-dot.green { background: var(--green); }
+        .status-dot.red { background: var(--red); }
+        .status-dot.orange { background: var(--orange); }
+
+        /* Summary bar */
+        .summary-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .summary-item {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid var(--border);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+
+        .summary-item .number {
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        .summary-item .label {
+            font-size: 0.8rem;
+            color: var(--gray);
+            margin-top: 4px;
+        }
+
+        .hidden { display: none; }
+
+        @media (max-width: 768px) {
+            .container { padding: 12px; }
+            header { padding: 20px; }
+            header h1 { font-size: 1.3rem; }
+            .input-methods { flex-direction: column; }
+            .summary-bar { grid-template-columns: 1fr 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🛡️ Validatore SBOM — Linee Guida ACN</h1>
+            <p>Verifica la conformità della Bill of Materials ai Criteri di Premialità (DPCM 30 aprile 2025)</p>
+            <span class="badge badge-version">CycloneDX 1.6 • Lista Tabellare 1 • Livello 0+1</span>
+        </header>
+
+        <!-- INPUT -->
+        <div class="input-section">
+            <h2>📄 Carica la SBOM</h2>
+            <div class="input-methods">
+                <button id="btn-paste" class="active" onclick="showInput('paste')">✏️ Incolla JSON</button>
+                <button id="btn-file" onclick="showInput('file')">📁 Carica File</button>
+            </div>
+            <textarea id="json-input" placeholder='Incolla qui il contenuto JSON della SBOM in formato CycloneDX 1.6...'></textarea>
+            <div id="file-drop" class="file-drop">
+                <div class="icon">📂</div>
+                <p><strong>Trascina qui il file JSON</strong></p>
+                <p style="font-size:0.85rem; color:var(--gray); margin-top:8px;">oppure clicca per selezionare</p>
+                <input type="file" id="file-input" accept=".json" style="display:none;">
+            </div>
+            <button class="btn-validate" onclick="validate()">🔍 Valida SBOM</button>
+        </div>
+
+        <!-- RISULTATI -->
+        <div id="results" class="results">
+            <div id="score-card" class="score-card"></div>
+            <div id="summary-bar" class="summary-bar"></div>
+            <div id="detail-structure" class="detail-section"></div>
+            <div id="detail-level0" class="detail-section"></div>
+            <div id="detail-level1-components" class="detail-section"></div>
+            <div id="detail-level1-services" class="detail-section"></div>
+            <div id="detail-countries" class="detail-section"></div>
+            <div id="detail-warnings" class="detail-section"></div>
+            <div style="margin-top:20px; text-align:right;">
+                <button class="btn-export" onclick="exportReport()">📥 Esporta Report HTML</button>
+                <button class="btn-export" onclick="exportJSON()" style="background:linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);">📥 Esporta Report JSON</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================================
+        // CONFIGURAZIONE PAESI AMMESSI (DPCM 30 aprile 2025)
+        // ============================================================
+        const PAESI_NATO = [
+            "US", "GB", "FR", "DE", "IT", "ES", "NL", "BE", "LU", "PT",
+            "DK", "NO", "IS", "CA", "TR", "GR", "PL", "CZ", "HU", "SK",
+            "SI", "EE", "LV", "LT", "RO", "BG", "HR", "AL", "ME", "MK",
+            "FI", "SE"
+        ];
+
+        const PAESI_UE = [
+            "AT", "BE", "BG", "HR", "CY", "CZ", "DK", "EE", "FI", "FR",
+            "DE", "GR", "HU", "IE", "IT", "LV", "LT", "LU", "MT", "NL",
+            "PL", "PT", "RO", "SK", "SI", "ES", "SE"
+        ];
+
+        const PAESI_ALLEGATO3 = ["AU", "KR", "JP", "IL", "NZ", "CH"];
+
+        const PAESI_AMMESSI = [...new Set([...PAESI_NATO, ...PAESI_UE, ...PAESI_ALLEGATO3])];
+
+        const COUNTRY_NAMES = {
+            "US": "Stati Uniti", "GB": "Regno Unito", "FR": "Francia", "DE": "Germania",
+            "IT": "Italia", "ES": "Spagna", "NL": "Paesi Bassi", "BE": "Belgio",
+            "LU": "Lussemburgo", "PT": "Portogallo", "DK": "Danimarca", "NO": "Norvegia",
+            "IS": "Islanda", "CA": "Canada", "TR": "Turchia", "GR": "Grecia",
+            "PL": "Polonia", "CZ": "Rep. Ceca", "HU": "Ungheria", "SK": "Slovacchia",
+            "SI": "Slovenia", "EE": "Estonia", "LV": "Lettonia", "LT": "Lituania",
+            "RO": "Romania", "BG": "Bulgaria", "HR": "Croazia", "AL": "Albania",
+            "ME": "Montenegro", "MK": "Macedonia del Nord", "FI": "Finlandia", "SE": "Svezia",
+            "AT": "Austria", "IE": "Irlanda", "MT": "Malta", "CY": "Cipro",
+            "AU": "Australia", "KR": "Corea del Sud", "JP": "Giappone",
+            "IL": "Israele", "NZ": "Nuova Zelanda", "CH": "Svizzera"
+        };
+
+        let validationResult = null;
+
+        // ============================================================
+        // UI HELPERS
+        // ============================================================
+        function showInput(mode) {
+            document.getElementById('btn-paste').classList.toggle('active', mode === 'paste');
+            document.getElementById('btn-file').classList.toggle('active', mode === 'file');
+            document.getElementById('json-input').style.display = mode === 'paste' ? 'block' : 'none';
+            document.getElementById('file-drop').classList.toggle('active', mode === 'file');
+        }
+
+        // File drop handling
+        const fileDrop = document.getElementById('file-drop');
+        const fileInput = document.getElementById('file-input');
+
+        fileDrop.addEventListener('click', () => fileInput.click());
+        fileDrop.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            fileDrop.classList.add('dragover');
+        });
+        fileDrop.addEventListener('dragleave', () => fileDrop.classList.remove('dragover'));
+        fileDrop.addEventListener('drop', (e) => {
+            e.preventDefault();
+            fileDrop.classList.remove('dragover');
+            handleFile(e.dataTransfer.files[0]);
+        });
+        fileInput.addEventListener('change', (e) => handleFile(e.target.files[0]));
+
+        function handleFile(file) {
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                document.getElementById('json-input').value = e.target.result;
+                showInput('paste');
+            };
+            reader.readAsText(file);
+        }
+
+        // ============================================================
+        // VALIDAZIONE PRINCIPALE
+        // ============================================================
+        function validate() {
+            const input = document.getElementById('json-input').value.trim();
+            if (!input) {
+                alert('Inserisci o carica un file JSON SBOM.');
+                return;
+            }
+
+            let bom;
+            try {
+                bom = JSON.parse(input);
+            } catch (e) {
+                alert('❌ JSON non valido: ' + e.message);
+                return;
+            }
+
+            validationResult = runValidation(bom);
+            renderResults(validationResult);
+        }
+
+        function runValidation(bom) {
+            const result = {
+                timestamp: new Date().toISOString(),
+                checks: [],
+                components: [],
+                services: [],
+                score: { total: 0, max: 0, pass: true },
+                summary: { errors: 0, warnings: 0, passed: 0 }
+            };
+
+            // ---- STRUTTURA BASE ----
+            checkStructure(bom, result);
+
+            // ---- LIVELLO 0: metadata.component ----
+            checkLevel0(bom, result);
+
+            // ---- LIVELLO 1: components ----
+            checkLevel1Components(bom, result);
+
+            // ---- LIVELLO 1: services ----
+            checkLevel1Services(bom, result);
+
+            // ---- CALCOLO SCORE ----
+            calculateScore(result);
+
+            return result;
+        }
+
+        function addCheck(result, category, status, title, detail, path) {
+            const check = { category, status, title, detail, path };
+            result.checks.push(check);
+            if (status === 'fail') result.summary.errors++;
+            else if (status === 'warn') result.summary.warnings++;
+            else result.summary.passed++;
+        }
+
+        // ============================================================
+        // CHECK: STRUTTURA BASE
+        // ============================================================
+        function checkStructure(bom, result) {
+            // bomFormat
+            if (bom.bomFormat === "CycloneDX") {
+                addCheck(result, 'structure', 'pass', 'bomFormat corretto', '"CycloneDX"', 'bom.bomFormat');
+            } else {
+                addCheck(result, 'structure', 'fail', 'bomFormat mancante o errato', `Trovato: "${bom.bomFormat || 'N/A'}". Atteso: "CycloneDX"`, 'bom.bomFormat');
+            }
+
+            // specVersion
+			if (bom.specVersion && bom.specVersion === "1.6") {
+				addCheck(result, 'structure', 'pass', 'specVersion conforme',
+					'Versione 1.6 (conforme alle Linee Guida ACN)', 'bom.specVersion');
+			} else if (bom.specVersion && parseFloat(bom.specVersion) >= 1.4) {
+				addCheck(result, 'structure', 'warn', 'specVersion non ottimale',
+					`Versione ${bom.specVersion}. Le Linee Guida ACN richiedono CycloneDX 1.6`, 'bom.specVersion');
+			} else {
+				addCheck(result, 'structure', 'fail', 'specVersion non conforme',
+					`Trovato: "${bom.specVersion || 'N/A'}". Richiesto: 1.6 (Linee Guida ACN)`, 'bom.specVersion');
+			}
+
+            // version
+            if (bom.version !== undefined) {
+                addCheck(result, 'structure', 'pass', 'version presente', `Valore: ${bom.version}`, 'bom.version');
+            } else {
+                addCheck(result, 'structure', 'warn', 'version assente', 'Campo opzionale ma consigliato', 'bom.version');
+            }
+
+            // metadata.timestamp
+            const ts = bom.metadata?.timestamp;
+            if (ts) {
+                addCheck(result, 'structure', 'pass', 'timestamp presente', ts, 'bom.metadata.timestamp');
+            } else {
+                addCheck(result, 'structure', 'warn', 'timestamp assente', 'Campo consigliato per tracciabilità', 'bom.metadata.timestamp');
+            }
+
+            // metadata.tools
+			const tools = bom.metadata?.tools;
+			if (tools) {
+				if (Array.isArray(tools) && tools.length > 0) {
+					// Formato legacy (array di oggetti) — usato nell'esempio ACN
+					addCheck(result, 'structure', 'pass', 'tools presente (formato legacy)',
+						`${tools.length} tool dichiarato/i`, 'bom.metadata.tools');
+				} else if (typeof tools === 'object' && !Array.isArray(tools) &&
+						   (tools.components || tools.services)) {
+					// Formato CycloneDX 1.6 (oggetto con components/services)
+					const count = (tools.components?.length || 0) + (tools.services?.length || 0);
+					addCheck(result, 'structure', 'pass', 'tools presente (formato 1.6)',
+						`${count} tool dichiarato/i`, 'bom.metadata.tools');
+				} else {
+					addCheck(result, 'structure', 'warn', 'tools presente ma vuoto',
+						'Il campo tools è presente ma non contiene elementi validi', 'bom.metadata.tools');
+				}
+			} else {
+				addCheck(result, 'structure', 'warn', 'tools assente',
+					'Presente nell\'esempio ACN, consigliato', 'bom.metadata.tools');
+			}
+
+            // metadata.authors
+            const authors = bom.metadata?.authors;
+            if (authors && authors.length > 0) {
+                addCheck(result, 'structure', 'pass', 'authors presente', `${authors.length} autore/i dichiarato/i`, 'bom.metadata.authors');
+            } else {
+                addCheck(result, 'structure', 'warn', 'authors assente', 'Presente nell\'esempio ACN, consigliato', 'bom.metadata.authors');
+            }
+
+            // metadata.manufacturer
+            const mfr = bom.metadata?.manufacturer;
+            if (mfr && mfr.name) {
+                addCheck(result, 'structure', 'pass', 'metadata.manufacturer presente', `"${mfr.name}"`, 'bom.metadata.manufacturer');
+            } else {
+                addCheck(result, 'structure', 'warn', 'metadata.manufacturer assente', 'Presente nell\'esempio ACN, consigliato', 'bom.metadata.manufacturer');
+            }
+        }
+
+        // ============================================================
+        // CHECK: LIVELLO 0
+        // ============================================================
+        function checkLevel0(bom, result) {
+            const comp = bom.metadata?.component;
+
+            if (!comp) {
+                addCheck(result, 'level0', 'fail', 'metadata.component ASSENTE', 'Campo obbligatorio: identifica l\'oggetto della fornitura (livello 0)', 'bom.metadata.component');
+                return;
+            }
+
+            // name
+            if (comp.name && comp.name.trim()) {
+                addCheck(result, 'level0', 'pass', 'name presente', `"${comp.name}"`, 'bom.metadata.component.name');
+            } else {
+                addCheck(result, 'level0', 'fail', 'name mancante', 'Campo obbligatorio', 'bom.metadata.component.name');
+            }
+
+            // type
+            const validTypes = ["application", "framework", "library", "container", "platform",
+                "device", "firmware", "file", "operating-system", "machine-learning-model",
+                "data", "cryptographic-asset"];
+            if (comp.type && validTypes.includes(comp.type)) {
+                addCheck(result, 'level0', 'pass', 'type valido', `"${comp.type}"`, 'bom.metadata.component.type');
+            } else {
+                addCheck(result, 'level0', 'fail', 'type mancante o non valido', `Trovato: "${comp.type || 'N/A'}". Valori ammessi: ${validTypes.join(', ')}`, 'bom.metadata.component.type');
+            }
+
+            // version
+            if (comp.version && comp.version.trim()) {
+                addCheck(result, 'level0', 'pass', 'version presente', `"${comp.version}"`, 'bom.metadata.component.version');
+            } else {
+                addCheck(result, 'level0', 'fail', 'version mancante', 'Campo obbligatorio', 'bom.metadata.component.version');
+            }
+
+            // description (consigliato)
+            if (comp.description) {
+                addCheck(result, 'level0', 'pass', 'description presente', comp.description.substring(0, 80) + '...', 'bom.metadata.component.description');
+            } else {
+                addCheck(result, 'level0', 'warn', 'description assente', 'Consigliato per chiarezza', 'bom.metadata.component.description');
+            }
+        }
+
+        // ============================================================
+        // CHECK: LIVELLO 1 - COMPONENTI
+        // ============================================================
+        function checkLevel1Components(bom, result) {
+            const components = bom.components || [];
+
+            if (components.length === 0) {
+                addCheck(result, 'components', 'fail', 'Nessun componente dichiarato', 'La BOM deve contenere almeno un componente a livello 1', 'bom.components[]');
+                return;
+            }
+
+            addCheck(result, 'components', 'pass', `${components.length} componente/i dichiarato/i`, '', 'bom.components[]');
+
+            components.forEach((comp, i) => {
+                const compResult = {
+                    index: i,
+                    name: comp.name || `Componente #${i}`,
+                    type: comp.type || 'N/A',
+                    version: comp.version || 'N/A',
+                    country: null,
+                    countryAllowed: false,
+                    errors: [],
+                    warnings: []
+                };
+
+                // type
+                if (!comp.type) {
+                    compResult.errors.push('type mancante');
+                    addCheck(result, 'components', 'fail', `[${compResult.name}] type mancante`, 'Campo obbligatorio', `bom.components[${i}].type`);
+                }
+
+                // name
+                if (!comp.name || !comp.name.trim()) {
+                    compResult.errors.push('name mancante');
+                    addCheck(result, 'components', 'fail', `[Componente #${i}] name mancante`, 'Campo obbligatorio', `bom.components[${i}].name`);
+                }
+
+                // version
+                if (!comp.version || !comp.version.trim()) {
+                    compResult.errors.push('version mancante');
+                    addCheck(result, 'components', 'fail', `[${compResult.name}] version mancante`, 'Campo obbligatorio', `bom.components[${i}].version`);
+                }
+
+                // manufacturer
+				const mfr = comp.manufacturer;
+				if (!mfr) {
+					// Verifica se è un componente open-source con externalReferences compilato
+					const hasExtRefs = comp.externalReferences && comp.externalReferences.length > 0;
+					const isOpenSourceType = comp.properties?.some(p =>
+						p.name?.toLowerCase().includes('open-source') ||
+						p.name?.toLowerCase().includes('opensource')
+					) || comp.purl?.includes('github.com') ||
+					   comp.externalReferences?.some(ref =>
+						ref.url?.includes('github.com') ||
+						ref.url?.includes('gitlab.com') ||
+						ref.url?.includes('kernel.org') ||
+						ref.type === 'vcs' ||
+						ref.type === 'source-distribution'
+					);
+
+					if (isOpenSourceType && hasExtRefs) {
+						// Eccezione prevista dalle Linee Guida ACN per software open-source
+						// senza singola entità organizzativa riconosciuta
+						compResult.warnings.push('manufacturer assente — componente open-source con externalReferences');
+						addCheck(result, 'components', 'warn',
+							`[${compResult.name}] manufacturer assente (eccezione open-source)`,
+							'Componente open-source senza entità organizzativa riconosciuta: provenienza indicata in externalReferences (conforme alle Linee Guida ACN)',
+							`bom.components[${i}].manufacturer`);
+						// Per la premialità, il Paese va estratto da externalReferences se possibile
+						// ma non blocca la conformità strutturale
+						compResult.countryAllowed = true; // Non penalizzare ai fini della premialità
+					} else {
+						compResult.errors.push('manufacturer mancante');
+						addCheck(result, 'components', 'fail', `[${compResult.name}] manufacturer mancante`,
+							'Oggetto obbligatorio con name, address.country, url. Per software open-source senza entità organizzativa riconosciuta, compilare externalReferences.',
+							`bom.components[${i}].manufacturer`);
+					}
+				} else {
+
+                    // manufacturer.address.country
+					const country = mfr.address?.country;
+					if (!country) {
+						compResult.errors.push('manufacturer.address.country mancante');
+						addCheck(result, 'components', 'fail', `[${compResult.name}] manufacturer.address.country mancante`,
+							'Campo obbligatorio: country code ISO 3166-1 del sito produttivo',
+							`bom.components[${i}].manufacturer.address.country`);
+					} else if (!/^[A-Z]{2}$/.test(country)) {
+						compResult.errors.push(`manufacturer.address.country formato non valido: "${country}"`);
+						addCheck(result, 'components', 'fail', `[${compResult.name}] country code non in formato ISO 3166-1`,
+							`Trovato: "${country}". Atteso: 2 lettere maiuscole (es. "IT", "US", "DE")`,
+							`bom.components[${i}].manufacturer.address.country`);
+					} else {
+						compResult.country = country;
+						if (PAESI_AMMESSI.includes(country.toUpperCase())) {
+							compResult.countryAllowed = true;
+							const categ = getCountryCategory(country);
+							addCheck(result, 'components', 'pass', `[${compResult.name}] Paese ammesso: ${country}`,
+								`${COUNTRY_NAMES[country.toUpperCase()] || country} (${categ})`,
+								`bom.components[${i}].manufacturer.address.country`);
+						} else {
+							compResult.countryAllowed = false;
+							compResult.errors.push(`Paese NON ammesso: ${country}`);
+							addCheck(result, 'components', 'fail', `[${compResult.name}] Paese NON ammesso: ${country}`,
+								`"${country}" non è tra i Paesi NATO, UE o Allegato 3 del DPCM`,
+								`bom.components[${i}].manufacturer.address.country`);
+						}
+					}
+
+                    // manufacturer.url
+                    const url = mfr.url;
+                    if (!url || (Array.isArray(url) && url.length === 0)) {
+                        compResult.errors.push('manufacturer.url mancante');
+                        addCheck(result, 'components', 'fail', `[${compResult.name}] manufacturer.url mancante`, 'Campo obbligatorio', `bom.components[${i}].manufacturer.url`);
+                    } else {
+                        addCheck(result, 'components', 'pass', `[${compResult.name}] manufacturer.url presente`, Array.isArray(url) ? url[0] : url, `bom.components[${i}].manufacturer.url`);
+                    }
+                }
+				
+
+                // bom-ref (consigliato)
+                if (!comp['bom-ref']) {
+                    compResult.warnings.push('bom-ref assente');
+                    addCheck(result, 'components', 'warn', `[${compResult.name}] bom-ref assente`, 'Presente nell\'esempio ACN, consigliato per tracciabilità', `bom.components[${i}].bom-ref`);
+                }
+
+                result.components.push(compResult);
+            });
+			
+			
+			// Verifica campi ulteriori (Lista 2) come suggerimenti informativi
+			components.forEach((comp, i) => {
+				const campiUlteriori = [];
+				if (comp.purl) campiUlteriori.push('purl');
+				if (comp.swid) campiUlteriori.push('swid');
+				if (comp.swhid) campiUlteriori.push('swhid');
+				if (comp.hashes && comp.hashes.length > 0) campiUlteriori.push('hashes');
+				if (comp.cpe) campiUlteriori.push('cpe');
+				if (comp.properties && comp.properties.length > 0) campiUlteriori.push('properties');
+				if (comp.externalReferences && comp.externalReferences.length > 0) campiUlteriori.push('externalReferences');
+
+				if (campiUlteriori.length === 0) {
+					addCheck(result, 'components', 'warn',
+						`[${comp.name || 'Componente #' + i}] Nessun campo ulteriore (Lista 2) presente`,
+						'Consigliato: purl, hashes, cpe, swid, swhid, properties, externalReferences — valorizzabili dalla stazione appaltante',
+						`bom.components[${i}]`);
+				}
+			});
+			
+			
+			
+        }
+
+        // ============================================================
+        // CHECK: LIVELLO 1 - SERVIZI
+        // ============================================================
+        function checkLevel1Services(bom, result) {
+            const services = bom.services || [];
+
+            if (services.length === 0) {
+                addCheck(result, 'services', 'warn', 'Nessun servizio dichiarato', 'Se la fornitura include servizi, devono essere dichiarati', 'bom.services[]');
+                return;
+            }
+
+            addCheck(result, 'services', 'pass', `${services.length} servizio/i dichiarato/i`, '', 'bom.services[]');
+
+            services.forEach((svc, i) => {
+                const svcResult = {
+                    index: i,
+                    name: svc.name || `Servizio #${i}`,
+                    version: svc.version || 'N/A',
+                    country: null,
+                    countryAllowed: false,
+                    errors: [],
+                    warnings: []
+                };
+
+                // name
+                if (!svc.name || !svc.name.trim()) {
+                    svcResult.errors.push('name mancante');
+                    addCheck(result, 'services', 'fail', `[Servizio #${i}] name mancante`, 'Campo obbligatorio', `bom.services[${i}].name`);
+                }
+
+                // version
+                if (!svc.version || !svc.version.trim()) {
+                    svcResult.errors.push('version mancante');
+                    addCheck(result, 'services', 'fail', `[${svcResult.name}] version mancante`, 'Campo obbligatorio', `bom.services[${i}].version`);
+                }
+
+                // provider
+                const prov = svc.provider;
+                if (!prov) {
+                    svcResult.errors.push('provider mancante');
+                    addCheck(result, 'services', 'fail', `[${svcResult.name}] provider mancante`, 'Oggetto obbligatorio con name, address.country, url', `bom.services[${i}].provider`);
+                } else {
+                    // provider.name
+                    if (!prov.name || !prov.name.trim()) {
+                        svcResult.errors.push('provider.name mancante');
+                        addCheck(result, 'services', 'fail', `[${svcResult.name}] provider.name mancante`, 'Campo obbligatorio', `bom.services[${i}].provider.name`);
+                    }
+
+                    // provider.address.country
+					const country = prov.address?.country;
+					if (!country) {
+						svcResult.errors.push('provider.address.country mancante');
+						addCheck(result, 'services', 'fail', `[${svcResult.name}] provider.address.country mancante`,
+							'Campo obbligatorio: country code ISO 3166-1 dell\'infrastruttura di erogazione',
+							`bom.services[${i}].provider.address.country`);
+					} else if (!/^[A-Z]{2}$/.test(country)) {
+						svcResult.errors.push(`provider.address.country formato non valido: "${country}"`);
+						addCheck(result, 'services', 'fail', `[${svcResult.name}] country code non in formato ISO 3166-1`,
+							`Trovato: "${country}". Atteso: 2 lettere maiuscole (es. "IT", "US", "DE")`,
+							`bom.services[${i}].provider.address.country`);
+					} else {
+						svcResult.country = country;
+						if (PAESI_AMMESSI.includes(country.toUpperCase())) {
+							svcResult.countryAllowed = true;
+							const categ = getCountryCategory(country);
+							addCheck(result, 'services', 'pass', `[${svcResult.name}] Paese ammesso: ${country}`,
+								`${COUNTRY_NAMES[country.toUpperCase()] || country} (${categ})`,
+								`bom.services[${i}].provider.address.country`);
+						} else {
+							svcResult.countryAllowed = false;
+							svcResult.errors.push(`Paese NON ammesso: ${country}`);
+							addCheck(result, 'services', 'fail', `[${svcResult.name}] Paese NON ammesso: ${country}`,
+								`"${country}" non è tra i Paesi NATO, UE o Allegato 3 del DPCM`,
+								`bom.services[${i}].provider.address.country`);
+						}
+					}
+
+                    // provider.url
+                    const url = prov.url;
+                    if (!url || (Array.isArray(url) && url.length === 0)) {
+                        svcResult.errors.push('provider.url mancante');
+                        addCheck(result, 'services', 'fail', `[${svcResult.name}] provider.url mancante`, 'Campo obbligatorio', `bom.services[${i}].provider.url`);
+                    } else {
+                        addCheck(result, 'services', 'pass', `[${svcResult.name}] provider.url presente`, Array.isArray(url) ? url[0] : url, `bom.services[${i}].provider.url`);
+                    }
+                }
+
+                // bom-ref (consigliato)
+                if (!svc['bom-ref']) {
+                    svcResult.warnings.push('bom-ref assente');
+                    addCheck(result, 'services', 'warn', `[${svcResult.name}] bom-ref assente`, 'Presente nell\'esempio ACN, consigliato', `bom.services[${i}].bom-ref`);
+                }
+
+                result.services.push(svcResult);
+            });
+        }
+
+        // ============================================================
+        // CALCOLO SCORE PREMIALITÀ
+        // ============================================================
+        function calculateScore(result) {
+            const allComponentsOk = result.components.every(c => c.countryAllowed && c.errors.length === 0);
+            const allServicesOk = result.services.every(s => s.countryAllowed && s.errors.length === 0);
+            const structureOk = result.checks.filter(c => c.category === 'structure' && c.status === 'fail').length === 0;
+            const level0Ok = result.checks.filter(c => c.category === 'level0' && c.status === 'fail').length === 0;
+
+            const hasComponents = result.components.length > 0;
+            const noCountryErrors = allComponentsOk && allServicesOk;
+
+            if (structureOk && level0Ok && hasComponents && noCountryErrors) {
+                result.score.total = 8;
+                result.score.pass = true;
+            } else {
+                result.score.total = 0;
+                result.score.pass = false;
+            }
+            result.score.max = 8;
+
+            // Dettaglio motivi di non conformità
+            result.score.reasons = [];
+            if (!structureOk) result.score.reasons.push('Errori nella struttura base della BOM');
+            if (!level0Ok) result.score.reasons.push('Errori nel livello 0 (metadata.component)');
+            if (!hasComponents) result.score.reasons.push('Nessun componente dichiarato a livello 1');
+            if (!allComponentsOk) result.score.reasons.push('Uno o più componenti non conformi (campi mancanti o Paese non ammesso)');
+            if (!allServicesOk) result.score.reasons.push('Uno o più servizi non conformi (campi mancanti o Paese non ammesso)');
+        }
+
+        // ============================================================
+        // HELPER: Categoria paese
+        // ============================================================
+        function getCountryCategory(code) {
+            code = code.toUpperCase();
+            if (code === "IT") return "Italia";
+            if (PAESI_UE.includes(code)) return "UE";
+            if (PAESI_NATO.includes(code)) return "NATO";
+            if (PAESI_ALLEGATO3.includes(code)) return "Allegato 3 DPCM";
+            return "Non ammesso";
+        }
+
+        // ============================================================
+        // RENDERING RISULTATI
+        // ============================================================
+        function renderResults(result) {
+            const container = document.getElementById('results');
+            container.classList.add('visible');
+
+            // Score card
+            const scoreCard = document.getElementById('score-card');
+            const scoreClass = result.score.pass ? 'pass' : 'fail';
+            const scoreIcon = result.score.pass ? '✅' : '❌';
+            const scoreText = result.score.pass ? 'CONFORME — Punteggio premiale attribuibile' : 'NON CONFORME — Punteggio premiale NON attribuibile';
+
+            let reasonsHtml = '';
+            if (result.score.reasons && result.score.reasons.length > 0) {
+                reasonsHtml = '<div style="margin-top:16px; text-align:left; max-width:500px; margin-left:auto; margin-right:auto;">';
+                reasonsHtml += '<p style="font-weight:600; font-size:0.85rem; margin-bottom:8px;">Motivi di non conformità:</p>';
+                result.score.reasons.forEach(r => {
+                    reasonsHtml += `<p style="font-size:0.8rem; color:var(--red); margin:4px 0;">• ${r}</p>`;
+                });
+                reasonsHtml += '</div>';
+            }
+
+            scoreCard.innerHTML = `
+                <div class="score-circle ${scoreClass}">
+                    ${result.score.total}/${result.score.max}
+                    <small>punti</small>
+                </div>
+                <div class="score-label">${scoreIcon} ${scoreText}</div>
+                <div class="score-sublabel">Meccanismo on/off — DPCM 30 aprile 2025, Art. 3</div>
+                ${reasonsHtml}
+            `;
+
+            // Summary bar
+            const summaryBar = document.getElementById('summary-bar');
+            summaryBar.innerHTML = `
+                <div class="summary-item">
+                    <div class="number" style="color:var(--green)">${result.summary.passed}</div>
+                    <div class="label">Controlli superati</div>
+                </div>
+                <div class="summary-item">
+                    <div class="number" style="color:var(--red)">${result.summary.errors}</div>
+                    <div class="label">Errori bloccanti</div>
+                </div>
+                <div class="summary-item">
+                    <div class="number" style="color:var(--orange)">${result.summary.warnings}</div>
+                    <div class="label">Avvisi</div>
+                </div>
+                <div class="summary-item">
+                    <div class="number" style="color:var(--blue)">${result.components.length + result.services.length}</div>
+                    <div class="label">Elementi Livello 1</div>
+                </div>
+            `;
+
+            // Detail: Structure
+            renderDetailSection('detail-structure', '🏗️ Struttura Base', result.checks.filter(c => c.category === 'structure'));
+
+            // Detail: Level 0
+            renderDetailSection('detail-level0', '📦 Livello 0 — Oggetto della Fornitura', result.checks.filter(c => c.category === 'level0'));
+
+            // Detail: Components
+            renderComponentTable('detail-level1-components', result);
+
+            // Detail: Services
+            renderServiceTable('detail-level1-services', result);
+
+            // Detail: Country summary
+            renderCountrySummary('detail-countries', result);
+
+            // Scroll to results
+            container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function renderDetailSection(elementId, title, checks) {
+            const el = document.getElementById(elementId);
+            let html = `<h3>${title}</h3>`;
+
+            checks.forEach(check => {
+                const iconClass = check.status === 'pass' ? 'pass' : check.status === 'fail' ? 'fail' : 'warn';
+                const iconSymbol = check.status === 'pass' ? '✓' : check.status === 'fail' ? '✗' : '!';
+
+                html += `
+                    <div class="check-item">
+                        <div class="check-icon ${iconClass}">${iconSymbol}</div>
+                        <div class="check-content">
+                            <div class="check-title">${check.title}</div>
+                            <div class="check-detail">${check.detail}</div>
+                            <span class="check-path">${check.path}</span>
+                        </div>
+                    </div>
+                `;
+            });
+
+            el.innerHTML = html;
+        }
+
+        function renderComponentTable(elementId, result) {
+            const el = document.getElementById(elementId);
+            let html = `<h3>🧩 Livello 1 — Componenti (${result.components.length})</h3>`;
+
+            if (result.components.length === 0) {
+                html += '<p style="color:var(--gray);">Nessun componente dichiarato.</p>';
+                el.innerHTML = html;
+                return;
+            }
+
+            html += `
+                <table class="component-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Nome</th>
+                            <th>Tipo</th>
+                            <th>Versione</th>
+                            <th>Paese</th>
+                            <th>Stato</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            result.components.forEach((comp, i) => {
+                const countryBadge = comp.country
+                    ? `<span class="country-badge ${comp.countryAllowed ? 'allowed' : 'denied'}">${comp.country} ${comp.countryAllowed ? '✓' : '✗'}</span>`
+                    : '<span class="country-badge denied">N/A ✗</span>';
+
+                const statusDot = comp.errors.length === 0
+                    ? '<span class="status-dot green"></span>'
+                    : '<span class="status-dot red"></span>';
+
+                html += `
+                    <tr>
+                        <td>${i + 1}</td>
+                        <td><strong>${comp.name}</strong></td>
+                        <td>${comp.type}</td>
+                        <td>${comp.version}</td>
+                        <td>${countryBadge}</td>
+                        <td>${statusDot} ${comp.errors.length === 0 ? 'OK' : comp.errors.length + ' errore/i'}</td>
+                    </tr>
+                `;
+            });
+
+            html += '</tbody></table>';
+
+            // Dettaglio errori componenti
+            const compErrors = result.checks.filter(c => c.category === 'components' && c.status === 'fail');
+            if (compErrors.length > 0) {
+                html += '<div style="margin-top:16px;">';
+                html += '<p style="font-weight:600; color:var(--red); font-size:0.85rem;">Errori bloccanti sui componenti:</p>';
+                compErrors.forEach(err => {
+                    html += `
+                        <div class="check-item">
+                            <div class="check-icon fail">✗</div>
+                            <div class="check-content">
+                                <div class="check-title">${err.title}</div>
+                                <div class="check-detail">${err.detail}</div>
+                                <span class="check-path">${err.path}</span>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+            }
+
+            el.innerHTML = html;
+        }
+
+        function renderServiceTable(elementId, result) {
+            const el = document.getElementById(elementId);
+            let html = `<h3>⚙️ Livello 1 — Servizi (${result.services.length})</h3>`;
+
+            if (result.services.length === 0) {
+                html += '<p style="color:var(--gray);">Nessun servizio dichiarato.</p>';
+                el.innerHTML = html;
+                return;
+            }
+
+            html += `
+                <table class="component-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Nome</th>
+                            <th>Versione</th>
+                            <th>Provider</th>
+                            <th>Paese</th>
+                            <th>Stato</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            result.services.forEach((svc, i) => {
+                const providerName = svc.name || 'N/A';
+                const countryBadge = svc.country
+                    ? `<span class="country-badge ${svc.countryAllowed ? 'allowed' : 'denied'}">${svc.country} ${svc.countryAllowed ? '✓' : '✗'}</span>`
+                    : '<span class="country-badge denied">N/A ✗</span>';
+
+                const statusDot = svc.errors.length === 0
+                    ? '<span class="status-dot green"></span>'
+                    : '<span class="status-dot red"></span>';
+
+                html += `
+                    <tr>
+                        <td>${i + 1}</td>
+                        <td><strong>${svc.name}</strong></td>
+                        <td>${svc.version}</td>
+                        <td>${providerName}</td>
+                        <td>${countryBadge}</td>
+                        <td>${statusDot} ${svc.errors.length === 0 ? 'OK' : svc.errors.length + ' errore/i'}</td>
+                    </tr>
+                `;
+            });
+
+            html += '</tbody></table>';
+
+            // Dettaglio errori servizi
+            const svcErrors = result.checks.filter(c => c.category === 'services' && c.status === 'fail');
+            if (svcErrors.length > 0) {
+                html += '<div style="margin-top:16px;">';
+                html += '<p style="font-weight:600; color:var(--red); font-size:0.85rem;">Errori bloccanti sui servizi:</p>';
+                svcErrors.forEach(err => {
+                    html += `
+                        <div class="check-item">
+                            <div class="check-icon fail">✗</div>
+                            <div class="check-content">
+                                <div class="check-title">${err.title}</div>
+                                <div class="check-detail">${err.detail}</div>
+                                <span class="check-path">${err.path}</span>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+            }
+
+            el.innerHTML = html;
+        }
+
+        function renderCountrySummary(elementId, result) {
+            const el = document.getElementById(elementId);
+            let html = '<h3>🌍 Riepilogo Provenienza Geografica</h3>';
+
+            // Raccogli tutti i paesi
+            const countryMap = {};
+            result.components.forEach(c => {
+                if (c.country) {
+                    if (!countryMap[c.country]) countryMap[c.country] = { components: 0, services: 0, allowed: c.countryAllowed };
+                    countryMap[c.country].components++;
+                }
+            });
+            result.services.forEach(s => {
+                if (s.country) {
+                    if (!countryMap[s.country]) countryMap[s.country] = { components: 0, services: 0, allowed: s.countryAllowed };
+                    countryMap[s.country].services++;
+                }
+            });
+
+            html += `
+                <table class="component-table">
+                    <thead>
+                        <tr>
+                            <th>Paese</th>
+                            <th>Categoria</th>
+                            <th>Componenti</th>
+                            <th>Servizi</th>
+                            <th>Ammesso</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            Object.keys(countryMap).sort().forEach(code => {
+                const data = countryMap[code];
+                const categ = getCountryCategory(code);
+                const name = COUNTRY_NAMES[code.toUpperCase()] || code;
+                const badge = data.allowed
+                    ? '<span class="country-badge allowed">✓ Ammesso</span>'
+                    : '<span class="country-badge denied">✗ Non ammesso</span>';
+
+                html += `
+                    <tr>
+                        <td><strong>${code}</strong> — ${name}</td>
+                        <td>${categ}</td>
+                        <td>${data.components}</td>
+                        <td>${data.services}</td>
+                        <td>${badge}</td>
+                    </tr>
+                `;
+            });
+
+            html += '</tbody></table>';
+
+            // Nota normativa
+            html += `
+                <div style="margin-top:16px; padding:12px 16px; background:rgba(59,130,246,0.05); border-radius:8px; border-left:4px solid var(--blue); font-size:0.8rem;">
+                    <strong>Riferimento normativo:</strong> DPCM 30 aprile 2025, Art. 3 — Sono ammessi i Paesi UE, NATO e quelli elencati nell'Allegato 3 
+                    (Australia, Corea del Sud, Giappone, Israele, Nuova Zelanda, Svizzera). Il meccanismo è on/off: se anche un solo elemento 
+                    di livello 1 proviene da un Paese non ammesso, il punteggio premiale (8 punti) non viene attribuito.
+                </div>
+            `;
+
+            el.innerHTML = html;
+        }
+
+        // ============================================================
+        // EXPORT FUNCTIONS
+        // ============================================================
+        function exportReport() {
+            if (!validationResult) {
+                alert('Esegui prima la validazione.');
+                return;
+            }
+
+            const reportHtml = `
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Report Validazione SBOM ACN - ${validationResult.timestamp}</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; max-width: 900px; margin: 0 auto; padding: 40px; color: #1e293b; }
+        h1 { color: #1e293b; border-bottom: 3px solid #3b82f6; padding-bottom: 12px; }
+        h2 { color: #334155; margin-top: 30px; }
+        .score { font-size: 2rem; font-weight: 700; text-align: center; padding: 20px; border-radius: 12px; margin: 20px 0; }
+        .score.pass { background: #f0fdf4; color: #16a34a; border: 2px solid #22c55e; }
+        .score.fail { background: #fef2f2; color: #dc2626; border: 2px solid #ef4444; }
+        table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.85rem; }
+        th { background: #f1f5f9; padding: 10px; text-align: left; border-bottom: 2px solid #e2e8f0; }
+        td { padding: 10px; border-bottom: 1px solid #e2e8f0; }
+        .pass-icon { color: #22c55e; } .fail-icon { color: #ef4444; } .warn-icon { color: #f59e0b; }
+        .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #e2e8f0; font-size: 0.8rem; color: #64748b; }
+    </style>
+</head>
+<body>
+    <h1>🛡️ Report Validazione SBOM — Linee Guida ACN</h1>
+    <p><strong>Data validazione:</strong> ${validationResult.timestamp}</p>
+    <p><strong>Riferimento normativo:</strong> DPCM 30 aprile 2025 — Criteri di Premialità</p>
+
+    <div class="score ${validationResult.score.pass ? 'pass' : 'fail'}">
+        ${validationResult.score.pass ? '✅' : '❌'} Punteggio: ${validationResult.score.total}/${validationResult.score.max} punti
+        <br><small>${validationResult.score.pass ? 'CONFORME — Punteggio premiale attribuibile' : 'NON CONFORME — Punteggio premiale NON attribuibile'}</small>
+    </div>
+
+    <h2>Riepilogo</h2>
+    <table>
+        <tr><td>Controlli superati</td><td><strong class="pass-icon">${validationResult.summary.passed}</strong></td></tr>
+        <tr><td>Errori bloccanti</td><td><strong class="fail-icon">${validationResult.summary.errors}</strong></td></tr>
+        <tr><td>Avvisi</td><td><strong class="warn-icon">${validationResult.summary.warnings}</strong></td></tr>
+        <tr><td>Componenti dichiarati</td><td><strong>${validationResult.components.length}</strong></td></tr>
+        <tr><td>Servizi dichiarati</td><td><strong>${validationResult.services.length}</strong></td></tr>
+    </table>
+
+    <h2>Dettaglio Controlli</h2>
+    <table>
+        <thead><tr><th>Stato</th><th>Categoria</th><th>Controllo</th><th>Dettaglio</th><th>Path</th></tr></thead>
+        <tbody>
+            ${validationResult.checks.map(c => `
+                <tr>
+                    <td>${c.status === 'pass' ? '<span class="pass-icon">✓</span>' : c.status === 'fail' ? '<span class="fail-icon">✗</span>' : '<span class="warn-icon">!</span>'}</td>
+                    <td>${c.category}</td>
+                    <td>${c.title}</td>
+                    <td>${c.detail}</td>
+                    <td><code>${c.path}</code></td>
+                </tr>
+            `).join('')}
+        </tbody>
+    </table>
+
+    <h2>Componenti</h2>
+    <table>
+        <thead><tr><th>#</th><th>Nome</th><th>Tipo</th><th>Versione</th><th>Paese</th><th>Stato</th></tr></thead>
+        <tbody>
+            ${validationResult.components.map((c, i) => `
+                <tr>
+                    <td>${i + 1}</td>
+                    <td>${c.name}</td>
+                    <td>${c.type}</td>
+                    <td>${c.version}</td>
+                    <td>${c.country || 'N/A'} ${c.countryAllowed ? '<span class="pass-icon">✓</span>' : '<span class="fail-icon">✗</span>'}</td>
+                    <td>${c.errors.length === 0 ? '<span class="pass-icon">OK</span>' : '<span class="fail-icon">' + c.errors.join(', ') + '</span>'}</td>
+                </tr>
+            `).join('')}
+        </tbody>
+    </table>
+
+    <h2>Servizi</h2>
+    <table>
+        <thead><tr><th>#</th><th>Nome</th><th>Versione</th><th>Paese</th><th>Stato</th></tr></thead>
+        <tbody>
+            ${validationResult.services.map((s, i) => `
+                <tr>
+                    <td>${i + 1}</td>
+                    <td>${s.name}</td>
+                    <td>${s.version}</td>
+                    <td>${s.country || 'N/A'} ${s.countryAllowed ? '<span class="pass-icon">✓</span>' : '<span class="fail-icon">✗</span>'}</td>
+                    <td>${s.errors.length === 0 ? '<span class="pass-icon">OK</span>' : '<span class="fail-icon">' + s.errors.join(', ') + '</span>'}</td>
+                </tr>
+            `).join('')}
+        </tbody>
+    </table>
+
+    ${validationResult.score.reasons && validationResult.score.reasons.length > 0 ? `    <h2>Motivi di Non Conformità</h2>
+    <ul>
+        ${validationResult.score.reasons.map(r => `<li style="color:#dc2626;">${r}</li>`).join('')}
+    </ul>
+    ` : ''}
+
+    <div class="footer">
+        <p>Report generato automaticamente dal Validatore SBOM ACN</p>
+        <p>Riferimenti: DPCM 30 aprile 2025 • Linee Guida ACN Criteri di Premialità (Allegato 1) • CycloneDX 1.6</p>
+    </div>
+</body>
+</html>`;
+
+            const blob = new Blob([reportHtml], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `report_validazione_sbom_acn_${new Date().toISOString().slice(0, 10)}.html`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function exportJSON() {
+            if (!validationResult) {
+                alert('Esegui prima la validazione.');
+                return;
+            }
+
+            const reportJson = {
+                reportType: "Validazione SBOM - Linee Guida ACN Criteri di Premialità",
+                riferimentoNormativo: "DPCM 30 aprile 2025",
+                dataValidazione: validationResult.timestamp,
+                esito: {
+                    conforme: validationResult.score.pass,
+                    punteggio: validationResult.score.total,
+                    punteggioMassimo: validationResult.score.max,
+                    motiviNonConformita: validationResult.score.reasons || []
+                },
+                riepilogo: {
+                    controlliSuperati: validationResult.summary.passed,
+                    erroriBloccanti: validationResult.summary.errors,
+                    avvisi: validationResult.summary.warnings,
+                    componentiDichiarati: validationResult.components.length,
+                    serviziDichiarati: validationResult.services.length
+                },
+                componenti: validationResult.components.map(c => ({
+                    nome: c.name,
+                    tipo: c.type,
+                    versione: c.version,
+                    paese: c.country,
+                    paeseAmmesso: c.countryAllowed,
+                    categoriaPaese: c.country ? getCountryCategory(c.country) : null,
+                    errori: c.errors,
+                    avvisi: c.warnings
+                })),
+                servizi: validationResult.services.map(s => ({
+                    nome: s.name,
+                    versione: s.version,
+                    paese: s.country,
+                    paeseAmmesso: s.countryAllowed,
+                    categoriaPaese: s.country ? getCountryCategory(s.country) : null,
+                    errori: s.errors,
+                    avvisi: s.warnings
+                })),
+                dettaglioControlli: validationResult.checks.map(c => ({
+                    categoria: c.category,
+                    stato: c.status,
+                    titolo: c.title,
+                    dettaglio: c.detail,
+                    path: c.path
+                }))
+            };
+
+            const blob = new Blob([JSON.stringify(reportJson, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `report_validazione_sbom_acn_${new Date().toISOString().slice(0, 10)}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // ============================================================
+        // PRELOAD: Inserisci la SBOM FortiGate 100F come esempio
+        // ============================================================
+        const exampleSBOM = {
+            "bomFormat": "CycloneDX",
+            "specVersion": "1.6",
+            "version": 1,
+            "metadata": {
+                "timestamp": "2026-06-12T00:00:00Z",
+                "tools": [
+                    {
+                        "vendor": "Fastweb S.p.A.",
+                        "name": "Fastweb BOM Generator",
+                        "version": "1.0"
+                    }
+                ],
+                "authors": [
+                    {
+                        "name": "Fastweb Security Team",
+                        "email": "security@fastweb.it"
+                    }
+                ],
+                "manufacturer": {
+                    "name": "Fortinet Inc.",
+                    "url": ["https://www.fortinet.com"]
+                },
+                "component": {
+                    "name": "FortiGate 100F",
+                    "type": "device",
+                    "description": "Next-Generation Firewall Appliance FortiGate 100F con servizi di installazione, gestione e manutenzione",
+                    "version": "FG-100F"
+                }
+            },
+            "services": [
+                {
+                    "bom-ref": "srv-installazione-ngfw",
+                    "name": "Servizio di Installazione e Configurazione NGFW FortiGate 100F",
+                    "version": "1.0",
+                    "description": "https://www.fastweb.it/corporate/servizi-ict/security/",
+                    "provider": {
+                        "name": "Fastweb S.p.A.",
+                        "address": { "country": "IT" },
+                        "url": ["https://www.fastweb.it"]
+                    }
+                },
+                {
+                    "bom-ref": "srv-gestione-ngfw",
+                    "name": "Servizio di Gestione Operativa NGFW FortiGate 100F",
+                    "version": "1.0",
+                    "description": "https://www.fastweb.it/corporate/servizi-ict/security/",
+                    "provider": {
+                        "name": "Fastweb S.p.A.",
+                        "address": { "country": "IT" },
+                        "url": ["https://www.fastweb.it"]
+                    }
+                },
+                {
+                    "bom-ref": "srv-manutenzione-ngfw",
+                    "name": "Servizio di Manutenzione NGFW FortiGate 100F",
+                    "version": "1.0",
+                    "description": "https://www.fastweb.it/corporate/servizi-ict/security/",
+                    "provider": {
+                        "name": "Fastweb S.p.A.",
+                        "address": { "country": "IT" },
+                        "url": ["https://www.fastweb.it"]
+                    }
+                }
+            ],
+            "components": [
+                {
+                    "type": "firmware",
+                    "bom-ref": "fortios-7.6.5",
+                    "name": "FortiOS",
+                    "version": "7.6.5",
+                    "description": "Fortinet Security Operating System",
+                    "manufacturer": {
+                        "name": "Fortinet Inc.",
+                        "address": { "country": "US" },
+                        "url": ["https://www.fortinet.com"]
+                    }
+                },
+                {
+                    "type": "application",
+                    "bom-ref": "fortiguard-ips",
+                    "name": "FortiGuard Intrusion Prevention System (IPS)",
+                    "version": "7.6.5",
+                    "description": "Motore di prevenzione delle intrusioni",
+                    "manufacturer": {
+                        "name": "Fortinet Inc.",
+                        "address": { "country": "US" },
+                        "url": ["https://www.fortinet.com"]
+                    }
+                },
+                {
+                    "type": "application",
+                    "bom-ref": "fortiguard-antivirus",
+                    "name": "FortiGuard AntiVirus",
+                    "version": "7.6.5",
+                    "description": "Motore antivirus e anti-malware",
+                    "manufacturer": {
+                        "name": "Fortinet Inc.",
+                        "address": { "country": "US" },
+                        "url": ["https://www.fortinet.com"]
+                    }
+                },
+                {
+                    "type": "application",
+                    "bom-ref": "fortiguard-webfiltering",
+                    "name": "FortiGuard Web Filtering",
+                    "version": "7.6.5",
+                    "description": "Servizio di filtraggio URL",
+                    "manufacturer": {
+                        "name": "Fortinet Inc.",
+                        "address": { "country": "US" },
+                        "url": ["https://www.fortinet.com"]
+                    }
+                },
+                {
+                    "type": "application",
+                    "bom-ref": "fortiguard-appcontrol",
+                    "name": "FortiGuard Application Control",
+                    "version": "7.6.5",
+                    "description": "Motore di controllo applicazioni",
+                    "manufacturer": {
+                        "name": "Fortinet Inc.",
+                        "address": { "country": "US" },
+                        "url": ["https://www.fortinet.com"]
+                    }
+                },
+                {
+                    "type": "application",
+                    "bom-ref": "fortiguard-antispam",
+                    "name": "FortiGuard Anti-Spam",
+                    "version": "7.6.5",
+                    "description": "Motore anti-spam",
+                    "manufacturer": {
+                        "name": "Fortinet Inc.",
+                        "address": { "country": "US" },
+                        "url": ["https://www.fortinet.com"]
+                    }
+                },
+                {
+                    "type": "application",
+                    "bom-ref": "fortiguard-industrial",
+                    "name": "FortiGuard Industrial Security Service",
+                    "version": "7.6.5",
+                    "description": "Sicurezza protocolli industriali OT/ICS/SCADA",
+                    "manufacturer": {
+                        "name": "Fortinet Inc.",
+                        "address": { "country": "US" },
+                        "url": ["https://www.fortinet.com"]
+                    }
+                },
+                {
+                    "type": "application",
+                    "bom-ref": "fortiguard-ai-malware",
+                    "name": "FortiGuard AI-based Inline Malware Prevention",
+                    "version": "7.6.5",
+                    "description": "Prevenzione malware basata su AI",
+                    "manufacturer": {
+                        "name": "Fortinet Inc.",
+                        "address": { "country": "US" },
+                        "url": ["https://www.fortinet.com"]
+                    }
+                },
+                {
+                    "type": "application",
+                    "bom-ref": "fortiguard-dns",
+                    "name": "FortiGuard DNS Filtering",
+                    "version": "7.6.5",
+                    "description": "Filtraggio DNS",
+                    "manufacturer": {
+                        "name": "Fortinet Inc.",
+                        "address": { "country": "US" },
+                        "url": ["https://www.fortinet.com"]
+                    }
+                },
+                {
+                    "type": "application",
+                    "bom-ref": "fortiguard-ipreputation",
+                    "name": "FortiGuard IP Reputation & Anti-Botnet",
+                    "version": "7.6.5",
+                    "description": "Reputazione IP e protezione anti-botnet",
+                    "manufacturer": {
+                        "name": "Fortinet Inc.",
+                        "address": { "country": "US" },
+                        "url": ["https://www.fortinet.com"]
+                    }
+                },
+                {
+                    "type": "application",
+                    "bom-ref": "fortiguard-attack-surface",
+                    "name": "FortiGuard Attack Surface Security Service",
+                    "version": "7.6.5",
+                    "description": "Monitoraggio superficie di attacco",
+                    "manufacturer": {
+                        "name": "Fortinet Inc.",
+                        "address": { "country": "US" },
+                        "url": ["https://www.fortinet.com"]
+                    }
+                },
+                {
+                    "type": "application",
+                    "bom-ref": "fortiguard-dlp",
+                    "name": "FortiGuard Data Loss Prevention (DLP)",
+                    "version": "7.6.5",
+                    "description": "Prevenzione perdita dati",
+                    "manufacturer": {
+                        "name": "Fortinet Inc.",
+                        "address": { "country": "US" },
+                        "url": ["https://www.fortinet.com"]
+                    }
+                }
+            ]
+        };
+
+        // Pre-carica l'esempio nel textarea
+        document.getElementById('json-input').value = JSON.stringify(exampleSBOM, null, 2);
+    </script>
+</body>
+</html>
