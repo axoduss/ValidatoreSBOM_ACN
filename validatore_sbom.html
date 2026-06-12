@@ -629,7 +629,7 @@
 			if (bom.specVersion && bom.specVersion === "1.6") {
 				addCheck(result, 'structure', 'pass', 'specVersion conforme',
 					'Versione 1.6 (conforme alle Linee Guida ACN)', 'bom.specVersion');
-			} else if (bom.specVersion && parseFloat(bom.specVersion) >= 1.4) {
+			} else if (bom.specVersion && parseFloat(bom.specVersion) >= 1.5) {
 				addCheck(result, 'structure', 'warn', 'specVersion non ottimale',
 					`Versione ${bom.specVersion}. Le Linee Guida ACN richiedono CycloneDX 1.6`, 'bom.specVersion');
 			} else {
@@ -758,12 +758,34 @@
                     errors: [],
                     warnings: []
                 };
+				
+				const validComponentTypes = [
+					"application", "framework", "library", "container",
+					"platform", "device", "firmware", "file",
+					"operating-system", "machine-learning-model",
+					"data", "cryptographic-asset"
+				];
+						
+				
 
                 // type
                 if (!comp.type) {
-                    compResult.errors.push('type mancante');
-                    addCheck(result, 'components', 'fail', `[${compResult.name}] type mancante`, 'Campo obbligatorio', `bom.components[${i}].type`);
-                }
+					compResult.errors.push('type mancante');
+					addCheck(result, 'components', 'fail', `[${compResult.name}] type mancante`,
+						'Campo obbligatorio (Linee Guida ACN, Lista 1)',
+						`bom.components[${i}].type`);
+				} else if (!validComponentTypes.includes(comp.type.toLowerCase())) {
+					compResult.errors.push(`type non valido: "${comp.type}"`);
+					addCheck(result, 'components', 'fail',
+						`[${compResult.name}] type "${comp.type}" non è una tipologia CycloneDX 1.6 valida`,
+						`Tipologie ammesse: ${validComponentTypes.join(', ')}`,
+						`bom.components[${i}].type`);
+				} else {
+					addCheck(result, 'components', 'pass',
+						`[${compResult.name}] type valido: "${comp.type}"`,
+						'Conforme allo standard CycloneDX 1.6',
+						`bom.components[${i}].type`);
+				}
 
                 // name
                 if (!comp.name || !comp.name.trim()) {
@@ -779,36 +801,54 @@
 
                 // manufacturer
 				const mfr = comp.manufacturer;
+				            // manufacturer assente
 				if (!mfr) {
-					// Verifica se è un componente open-source con externalReferences compilato
 					const hasExtRefs = comp.externalReferences && comp.externalReferences.length > 0;
-					const isOpenSourceType = comp.properties?.some(p =>
-						p.name?.toLowerCase().includes('open-source') ||
-						p.name?.toLowerCase().includes('opensource')
-					) || comp.purl?.includes('github.com') ||
-					   comp.externalReferences?.some(ref =>
-						ref.url?.includes('github.com') ||
-						ref.url?.includes('gitlab.com') ||
-						ref.url?.includes('kernel.org') ||
-						ref.type === 'vcs' ||
-						ref.type === 'source-distribution'
-					);
 
-					if (isOpenSourceType && hasExtRefs) {
-						// Eccezione prevista dalle Linee Guida ACN per software open-source
-						// senza singola entità organizzativa riconosciuta
-						compResult.warnings.push('manufacturer assente — componente open-source con externalReferences');
+					if (hasExtRefs) {
+						// ---------------------------------------------------------------
+						// ECCEZIONE OPEN-SOURCE (Linee Guida ACN, Lista 1, campo
+						// bom.components[].manufacturer):
+						// "nel caso in cui il componente sia un software open-source,
+						// l'operatore economico dovrà compilare il campo sopracitato
+						// solamente nell'ipotesi in cui lo stesso software sia distribuito
+						// da una singola entità organizzativa riconosciuta [...].
+						// In caso contrario, l'operatore economico potrà specificare la
+						// provenienza del componente open source nel relativo campo
+						// externalReferences"
+						// ---------------------------------------------------------------
+						// Se manufacturer è assente MA externalReferences è compilato,
+						// si presume che l'operatore economico stia dichiarando un
+						// componente open-source senza entità organizzativa riconosciuta.
+						// La verifica di merito (se è davvero open-source) spetta alla
+						// stazione appaltante in sede di valutazione dell'offerta.
+						// ---------------------------------------------------------------
+
+						compResult.warnings.push(
+							'manufacturer assente — provenienza indicata in externalReferences (eccezione open-source)'
+						);
 						addCheck(result, 'components', 'warn',
 							`[${compResult.name}] manufacturer assente (eccezione open-source)`,
-							'Componente open-source senza entità organizzativa riconosciuta: provenienza indicata in externalReferences (conforme alle Linee Guida ACN)',
+							'Componente con manufacturer assente e externalReferences compilato: ' +
+							'conforme alle Linee Guida ACN per software open-source senza singola ' +
+							'entità organizzativa riconosciuta. La verifica di merito spetta alla ' +
+							'stazione appaltante.',
 							`bom.components[${i}].manufacturer`);
-						// Per la premialità, il Paese va estratto da externalReferences se possibile
-						// ma non blocca la conformità strutturale
-						compResult.countryAllowed = true; // Non penalizzare ai fini della premialità
+
+						// Ai fini della premialità, questo componente è NEUTRO:
+						// non blocca il punteggio (non è un "fail") ma non contribuisce
+						// positivamente alla valutazione del Paese.
+						compResult.countryAllowed = true;
+
 					} else {
+						// manufacturer assente E nessun externalReferences → errore bloccante
 						compResult.errors.push('manufacturer mancante');
-						addCheck(result, 'components', 'fail', `[${compResult.name}] manufacturer mancante`,
-							'Oggetto obbligatorio con name, address.country, url. Per software open-source senza entità organizzativa riconosciuta, compilare externalReferences.',
+						addCheck(result, 'components', 'fail',
+							`[${compResult.name}] manufacturer mancante`,
+							'Oggetto obbligatorio (name, address.country, url). ' +
+							'Per software open-source senza entità organizzativa riconosciuta, ' +
+							'è possibile omettere manufacturer compilando externalReferences ' +
+							'(Linee Guida ACN, Lista 1).',
 							`bom.components[${i}].manufacturer`);
 					}
 				} else {
@@ -861,6 +901,21 @@
 
                 result.components.push(compResult);
             });
+			
+			
+			
+			// Verifica requisito di ampiezza (Linee Guida ACN, §1.2 e §1.6)
+			const typesPresent = new Set(
+				components.map(c => c.type?.toLowerCase()).filter(Boolean)
+			);
+
+			if (!typesPresent.has('application') && !typesPresent.has('firmware')) {
+				addCheck(result, 'components', 'warn',
+					'Requisito di ampiezza: nessun componente di tipo "application" né "firmware"',
+					'Le Linee Guida ACN (§1.6) indicano che la BOM deve contenere almeno componenti di tipo "Application" e/o "Firmware". Verificare la completezza della BOM.',
+					'bom.components[].type');
+			}
+			
 			
 			
 			// Verifica campi ulteriori (Lista 2) come suggerimenti informativi
@@ -1054,7 +1109,7 @@
                     <small>punti</small>
                 </div>
                 <div class="score-label">${scoreIcon} ${scoreText}</div>
-                <div class="score-sublabel">Meccanismo on/off — DPCM 30 aprile 2025, Art. 3</div>
+                <div class="score-sublabel">Meccanismo on/off — DPCM 30 aprile 2025, Art. 4 — Linee Guida ACN Criteri di Premialità</div>
                 ${reasonsHtml}
             `;
 
